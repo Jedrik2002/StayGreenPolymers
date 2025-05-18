@@ -3,6 +3,7 @@ import pandas as pd
 from geopy.geocoders import Nominatim
 import pydeck as pdk
 import time
+import datetime
 
 # Load the CSV file
 df = pd.read_csv("sdata.csv")
@@ -88,3 +89,32 @@ deck = pdk.Deck(
 )
 
 st.pydeck_chart(deck)
+
+# ------------------------------
+# Monthly Target Progress Tracker
+# ------------------------------
+st.markdown("### ♻️ Monthly PET Plastic Collection Progress")
+
+# Convert 'Date' column to datetime
+df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
+
+# Filter current month data
+today = datetime.datetime.now()
+monthly_target = 30  # tons
+this_month = df[(df['Date'].dt.month == today.month) & (df['Date'].dt.year == today.year)]
+
+# Calculate progress
+collected = this_month['Quantity (Tons)'].sum()
+progress = min(collected / monthly_target, 1.0)
+
+# Display
+st.metric(label="Progress This Month", value=f"{collected:.2f} / {monthly_target} Tons")
+st.progress(progress)
+
+# Optional message
+if progress >= 1.0:
+    st.success("🎉 Target achieved this month!")
+elif progress >= 0.5:
+    st.info("🚀 Over halfway there, keep going!")
+else:
+    st.warning("⏳ Off to a slow start. Let's collect more!")
